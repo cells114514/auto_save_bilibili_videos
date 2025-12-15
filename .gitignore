@@ -1,0 +1,65 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+env.bak/
+
+# VS Code
+.vscode/
+
+# Pytest
+.pytest_cache/
+
+# Packages / build
+build/
+dist/
+*.egg-info/
+.eggs/
+*.whl
+
+# Logs and databases
+*.log
+*.sqlite3
+*.db
+
+# System files
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Credentials / env files
+.env
+.env.*
+
+# Jupyter
+.ipynb_checkpoints
+
+# Common Python artifacts
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Requests/cache
+*.cache
+
+# Project-specific outputs / downloaded media
+videos/
+已失效视频/
+*.mp4
+output.html
+title_list.csv
+bvidapi.json
+video.json
+已失效视频.txt
+fav_*
+video.json
+media_id.txt
+
+# Ignore editor/project files
+.idea/
+*.iml
