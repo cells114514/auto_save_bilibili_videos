@@ -36,7 +36,7 @@ def init_program():
 def load_known_bvids(csv_path: Path) -> Set[str]:
     if not csv_path.exists():
         return set()
-    with csv_path.open(newline="", encoding="utf-8") as fh:
+    with csv_path.open(mode='r', newline="", encoding="utf-8") as fh:
         reader = csv.DictReader(fh)
         bvids = set()
         for row in reader:
@@ -46,14 +46,14 @@ def load_known_bvids(csv_path: Path) -> Set[str]:
                     break
     return bvids
 
-def append_records_to_csv(records: List[Tuple[str, str, str]], csv_path: Path):
-    file_exists = csv_path.exists()
-    with csv_path.open("a", newline="", encoding="utf-8") as fh:
-        writer = csv.writer(fh)
-        if not file_exists:
-            writer.writerow(["title", "bvid", "cid"])
-        for title, bvid, cid in records:
-            writer.writerow([title, bvid, cid])
+# def append_records_to_csv(records: List[Tuple[str, str, str]], csv_path: Path):
+#     file_exists = csv_path.exists()
+#     with csv_path.open("a", newline="", encoding="utf-8") as fh:
+#         writer = csv.writer(fh)
+#         if not file_exists:
+#             writer.writerow(["title", "bvid", "cid"])
+#         for title, bvid, cid in records:
+#             writer.writerow([title, bvid, cid])
 
 def watch_fav(media_id: int, download_new: bool = False, interval: int = 3):
     known = load_known_bvids(CSV_PATH)

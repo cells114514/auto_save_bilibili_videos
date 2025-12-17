@@ -5,3 +5,4 @@ urllib3>=2.0.0
 certifi>=2023.5.7
 pywin32>=305; platform_system == "Windows"
 PyQt5==5.15.11
+portalocker>=3.2.0

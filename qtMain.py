@@ -4,17 +4,18 @@ import io
 import time
 import os
 import PyQt5
+from threading import Thread
 
 from make_list import get_media_id, load_media_id, load_lst_from_csv
-from watch_fav import watch_fav
+from watch_fav import watch_fav, init_program
 
 # from PyQt5.QtCore import QT_VERSION_STR, PYQT_VERSION_STR
 # print(f"Qt {QT_VERSION_STR}, PyQt {PYQT_VERSION_STR}")
 # # 查看PyQt5版本
 
-# pyqt5_path = os.path.dirname(PyQt5.__file__)
-# QT_PLUGIN_PATH = os.path.join(pyqt5_path, 'Qt5', 'plugins')
-# os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = os.path.join(QT_PLUGIN_PATH, 'platforms')       # 这里是针对Ubuntu下找不到平台插件的问题，请根据实际情况调整
+pyqt5_path = os.path.dirname(PyQt5.__file__)
+QT_PLUGIN_PATH = os.path.join(pyqt5_path, 'Qt5', 'plugins')
+os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = os.path.join(QT_PLUGIN_PATH, 'platforms')       # 这里是针对Ubuntu下找不到平台插件的问题，请根据实际情况调整
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
@@ -28,13 +29,25 @@ class MonitorThread(QThread):
         self._running = True
     def stop(self):
         self._running = False
+    def new_watch_fav(self, media_id):
+        watch_fav(media_id=media_id, download_new=True, interval=3)
+        self.update_titles.emit()
     def run(self):
         try:
+            curr_media_ids = load_media_id()
             while self._running:
-                for media_id in self.media_ids:
-                    watch_fav(media_id=media_id, download_new=True, interval=3)
-                    self.log.emit(f"Processed {media_id}")
-                self.update_titles.emit()
+                workers = []
+                for media_id in curr_media_ids:
+                    worker = Thread(
+                        target=self.new_watch_fav,
+                        args=(media_id,),
+                        daemon=True,
+                    )
+                    worker.start()
+                    workers.append(worker)
+                for worker in workers:
+                    worker.join()
+                # self.update_titles.emit()
                 time.sleep(60)
         except Exception as e:
             self.log.emit(f"错误: {e}")
@@ -44,7 +57,7 @@ class MonitorThread(QThread):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Simple PyQt5 App")
+        self.setWindowTitle("Bilibili 收藏夹监视器")
         self.setGeometry(400, 200, 1000, 600)
         self.monitoring = False
 
@@ -145,6 +158,7 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == "__main__":
+    init_program()
     app = QApplication(sys.argv)
     window = MainWindow()
     window.load_titles()
