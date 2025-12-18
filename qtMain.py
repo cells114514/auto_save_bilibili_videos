@@ -8,6 +8,7 @@ from threading import Thread
 
 from make_list import get_media_id, load_media_id, load_lst_from_csv
 from watch_fav import watch_fav, init_program
+from download import down_single_video
 
 # from PyQt5.QtCore import QT_VERSION_STR, PYQT_VERSION_STR
 # print(f"Qt {QT_VERSION_STR}, PyQt {PYQT_VERSION_STR}")
@@ -34,6 +35,7 @@ class MonitorThread(QThread):
         self.update_titles.emit()
     def run(self):
         try:
+            self.log.emit("监视已启动。")
             curr_media_ids = load_media_id()
             while self._running:
                 workers = []
@@ -52,6 +54,24 @@ class MonitorThread(QThread):
         except Exception as e:
             self.log.emit(f"错误: {e}")
         finally:
+            self.log.emit("监视已停止。")
+            self.finished.emit()
+
+class DownloadThread(QThread):
+    log = pyqtSignal(str)
+    finished = pyqtSignal()
+    def __init__(self, setTitle, bvid):
+        super().__init__()
+        self.setTitle = setTitle
+        self.bvid = bvid
+    def run(self):
+        try:
+            # 假设有一个函数 download_video_by_bvid 用于下载视频
+            down_single_video(self.setTitle, self.bvid)
+            self.log.emit(f"下载完成: {self.bvid}")
+        except Exception as e:
+            self.log.emit(f"下载错误 ({self.bvid}): {e}")
+        finally:
             self.finished.emit()
 
 class MainWindow(QMainWindow):
@@ -64,8 +84,8 @@ class MainWindow(QMainWindow):
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         menu = self.menuBar().addMenu("File")
-        menu.addAction("页面1", lambda: self.pageBlock.setCurrentIndex(0))
-        menu.addAction("页面2", lambda: self.pageBlock.setCurrentIndex(1))
+        menu.addAction("fav monitor", lambda: self.pageBlock.setCurrentIndex(0))
+        menu.addAction("down a video(low quality)", lambda: self.pageBlock.setCurrentIndex(1))
         menu.addAction("退出", self.close)
 
         self.titleBox = QVBoxLayout()
@@ -119,6 +139,21 @@ class MainWindow(QMainWindow):
         page2.setLayout(self.SingledownBlock)
         self.pageBlock.addWidget(page2)
 
+        self.SinLabel = QLabel("单独下载视频", self)
+        self.setTitle = QLineEdit(self)
+        self.setTitle.setPlaceholderText("自定义标题（默认为bvid）")
+        self.bvid_input = QLineEdit(self)
+        self.bvid_input.setPlaceholderText("输入BVID")
+        self.singleDownBotton = QPushButton("下载", self)
+        self.singleDownBotton.clicked.connect(self.start_single_download)
+        self.tinyTerminal = QPlainTextEdit("", self)
+        self.tinyTerminal.setReadOnly(True)
+
+        self.SingledownBlock.addWidget(self.SinLabel)
+        self.SingledownBlock.addWidget(self.setTitle)
+        self.SingledownBlock.addWidget(self.bvid_input)
+        self.SingledownBlock.addWidget(self.singleDownBotton)
+        self.SingledownBlock.addWidget(self.tinyTerminal)
         self.pageBlock.setCurrentIndex(0)
 
     def load_titles(self):
@@ -136,6 +171,16 @@ class MainWindow(QMainWindow):
                 media_id_list.append(int(line))
         get_media_id(media_id_list)
         print(f"Saved media IDs: {media_id_list}")
+
+    def start_single_download(self):
+        bvid = self.bvid_input.text().strip()
+        setTitle = self.setTitle.text().strip() if self.setTitle.text().strip() else str(bvid)
+        if bvid:
+            self.singleDownBotton.setEnabled(False)
+            self.downloadThread = DownloadThread(setTitle, bvid)
+            self.downloadThread.log.connect(lambda msg: self.tinyTerminal.appendPlainText(msg))
+            self.downloadThread.finished.connect(lambda: self.singleDownBotton.setEnabled(True))
+            self.downloadThread.start()
 
     # def stopMoitor(self):
     #     self.monitoring = False     # 不直接抛出异常，让循环自然结束，防止文件损坏导致无法再次使用

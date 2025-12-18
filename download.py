@@ -175,12 +175,12 @@ def down_videos_from_list():
     for title, bvid, cid in lst:
         down_video_with_parts(title, bvid, cid)
 
-def down_single_video(title, bvid, cid=None, start_p=1, end_p=None):    #提供了不知道cid的下载方法
+def down_single_video(title, bvid, cid=None):    #提供了不知道cid的下载方法
     if not cid:
         cid = get_cid_with_bvid(bvid)
-        down_video_with_parts(title, bvid, cid, start_p=start_p, end_p=end_p)
+        down_video_mp4(title, bvid, cid)
     else:
-        down_video_with_parts(title, bvid, cid, start_p=start_p, end_p=end_p)
+        down_video_mp4(title, bvid, cid)
 
 # if __name__ == "__main__":
 #     down_videos_from_list()
